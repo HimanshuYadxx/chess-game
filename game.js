@@ -1,38 +1,115 @@
-let selectedPiece = null;
+document.addEventListener('DOMContentLoaded', () => {
+    const boardContainer = document.getElementById('board-container');
+    const gameStatus = document.getElementById('game-status');
+    const chess = new Chess();
+    let selectedPiece = null;
+    let draggedItem = null;
 
-$(document).ready(function () {
-  $(".gamecell").on("click", function () {
-    if ($(this).hasClass("selected")) {
-      $(this).removeClass("selected");
-      selectedPiece = null;
-    } else if ($(this).html() !== "") {
-      $(".gamecell").removeClass("selected");
-      $(this).addClass("selected");
-      selectedPiece = $(this);
-    } else if (selectedPiece) {
-      // Move the piece
-      $(this).html(selectedPiece.html());
-      selectedPiece.html("");
-      $(".gamecell").removeClass("selected");
-      selectedPiece = null;
+    function createBoard() {
+        boardContainer.innerHTML = '';
+        const board = chess.board();
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                const square = document.createElement('div');
+                square.classList.add('square', (i + j) % 2 === 0 ? 'white' : 'black');
+                square.dataset.row = i;
+                square.dataset.col = j;
+
+                const piece = board[i][j];
+                if (piece) {
+                    const pieceElement = document.createElement('span');
+                    pieceElement.classList.add('piece');
+                    pieceElement.textContent = getPieceUnicode(piece);
+                    pieceElement.draggable = true;
+                    pieceElement.dataset.piece = `${piece.type}${piece.color}`;
+                    square.appendChild(pieceElement);
+                }
+
+                boardContainer.appendChild(square);
+            }
+        }
+        addDragAndDropListeners();
+        updateGameStatus();
     }
-  });
-});
 
-$(document).ready(function () {
-  const pieces = {
-    1: '♖', 2: '♘', 3: '♗', 4: '♕', 5: '♔', 6: '♗', 7: '♘', 8: '♖',
-  };
+    function getPieceUnicode(piece) {
+        const unicodeMap = {
+            'p': '♙', 'r': '♖', 'n': '♘', 'b': '♗', 'q': '♕', 'k': '♔',
+            'P': '♟', 'R': '♜', 'N': '♞', 'B': '♝', 'Q': '♛', 'K': '♚'
+        };
+        return unicodeMap[piece.color === 'b' ? piece.type.toUpperCase() : piece.type];
+    }
 
-  // Place Black pieces (row 8 & 7)
-  for (let i = 1; i <= 8; i++) {
-    $(`#${i}_8`).html(`<span class="black">${pieces[i]}</span>`);
-    $(`#${i}_7`).html(`<span class="black">♟</span>`);
-  }
+    function addDragAndDropListeners() {
+        const pieces = document.querySelectorAll('.piece');
+        const squares = document.querySelectorAll('.square');
 
-  // Place White pieces (row 1 & 2)
-  for (let i = 1; i <= 8; i++) {
-    $(`#${i}_1`).html(`<span class="white">${pieces[i]}</span>`);
-    $(`#${i}_2`).html(`<span class="white">♙</span>`);
-  }
+        pieces.forEach(piece => {
+            piece.addEventListener('dragstart', (e) => {
+                draggedItem = e.target;
+                setTimeout(() => {
+                    e.target.style.display = 'none';
+                }, 0);
+            });
+
+            piece.addEventListener('dragend', (e) => {
+                setTimeout(() => {
+                    draggedItem.style.display = 'block';
+                    draggedItem = null;
+                }, 0);
+            });
+        });
+
+        squares.forEach(square => {
+            square.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            square.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+            });
+
+            square.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (draggedItem) {
+                    const fromSquare = getSquareNotation(draggedItem.parentElement);
+                    const toSquare = getSquareNotation(e.currentTarget);
+                    const move = chess.move({
+                        from: fromSquare,
+                        to: toSquare,
+                        promotion: 'q' // NOTE: always promote to a queen for simplicity
+                    });
+
+                    if (move) {
+                        createBoard();
+                    }
+                }
+            });
+        });
+    }
+
+    function getSquareNotation(squareElement) {
+        const col = 'abcdefgh'[squareElement.dataset.col];
+        const row = 8 - squareElement.dataset.row;
+        return `${col}${row}`;
+    }
+
+    function updateGameStatus() {
+        let status = '';
+        const moveColor = chess.turn() === 'w' ? 'White' : 'Black';
+
+        if (chess.in_checkmate()) {
+            status = `Game over, ${moveColor} is in checkmate.`;
+        } else if (chess.in_draw()) {
+            status = 'Game over, it\'s a draw.';
+        } else {
+            status = `${moveColor}'s turn to move.`;
+            if (chess.in_check()) {
+                status += ` ${moveColor} is in check.`;
+            }
+        }
+        gameStatus.textContent = status;
+    }
+
+    createBoard();
 });
