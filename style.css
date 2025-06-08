@@ -4,7 +4,9 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f0f0f0;
+    margin: 0;
+    background-color: #333;
+    color: white;
 }
 
 #game-container {
@@ -17,7 +19,7 @@ body {
     grid-template-rows: repeat(8, 60px);
     width: 480px;
     height: 480px;
-    border: 5px solid #333;
+    border: 5px solid #555;
 }
 
 .square {
@@ -26,21 +28,26 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 40px;
+    font-size: 50px; /* Increased size for better visibility */
     cursor: grab;
-}
-
-.white {
-    background-color: #f0d9b5;
-}
-
-.black {
-    background-color: #b58863;
-}
-
-.piece {
+    /* Added to make pieces unselectable as text */
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+.white {
+    background-color: #f0d9b5;
+    color: #333;
+}
+
+.black {
+    background-color: #b58863;
+    color: #333;
+}
+
+/* Ensure pieces are visible on both color squares */
+.piece {
+    text-shadow: 0 0 3px #000; /* Add a slight shadow for depth */
 }
