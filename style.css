@@ -1,78 +1,46 @@
 body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: #f0f0f0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
 }
 
-#game {
-  display: grid;
-  grid-template-columns: repeat(9, 50px); /* 8 board + 1 prefix column */
-  grid-template-rows: repeat(9, 50px);    /* 8 board + 1 bottom row */
-  gap: 0;
-  border: 2px solid #333;
-  background-color: #fff;
+#game-container {
+    text-align: center;
 }
 
-.cellprefix {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  background: none;
-  border: none;
+#board-container {
+    display: grid;
+    grid-template-columns: repeat(8, 60px);
+    grid-template-rows: repeat(8, 60px);
+    width: 480px;
+    height: 480px;
+    border: 5px solid #333;
 }
 
-.gamecell {
-  width: 50px;
-  height: 50px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 30px;
-  background: #eee;
+.square {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 40px;
+    cursor: grab;
 }
 
-.gamecell.grey {
-  background: #aaa;
+.white {
+    background-color: #f0d9b5;
 }
 
-#turn {
-  grid-column: span 9;
-  text-align: center;
-  padding: 10px;
-  font-weight: bold;
-  background-color: #fff;
-  border-top: 2px solid #333;
+.black {
+    background-color: #b58863;
 }
 
-.chess-piece {
-  font-size: 32px;
-  cursor: grab;
-  user-select: none;
-}
-
-.chess-piece:active {
-  cursor: grabbing;
-}
-
-.selected {
-  outline: 3px solid red;
-}
-
-.white, .black {
-  font-size: 30px;
-  cursor: pointer;
-}
-
-.gamecell {
-  text-align: center;
-  vertical-align: middle;
-  line-height: 60px;
+.piece {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
