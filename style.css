@@ -65,3 +65,14 @@ body {
 .selected {
   outline: 3px solid red;
 }
+
+.white, .black {
+  font-size: 30px;
+  cursor: pointer;
+}
+
+.gamecell {
+  text-align: center;
+  vertical-align: middle;
+  line-height: 60px;
+}
