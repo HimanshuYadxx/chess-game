@@ -1,3 +1,5 @@
+console.log("JS loaded");
+
 document.addEventListener('DOMContentLoaded', () => {
     const boardContainer = document.getElementById('board-container');
     const gameStatus = document.getElementById('game-status');
