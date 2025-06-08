@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Chess Game</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Chess Game</h1>
-  <div id="game" class="board"></div>
+    <div id="game-container">
+        <h1>Chess Game</h1>
+        <div id="board-container"></div>
+        <div id="game-status"></div>
+    </div>
 
-  <script src="game.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="js/game.js"></script>
 </body>
 </html>
