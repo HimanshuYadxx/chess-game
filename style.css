@@ -61,3 +61,7 @@ body {
 .chess-piece:active {
   cursor: grabbing;
 }
+
+.selected {
+  outline: 3px solid red;
+}
