@@ -11,6 +11,7 @@ class ChessGame {
         this.initializeUI();
         this.renderBoard();
         this.updateGameInfo();
+        this.loadAudio();
     }
 
     // Initialize the chess board with starting positions
@@ -36,12 +37,129 @@ class ChessGame {
     // Initialize UI elements and event listeners
     initializeUI() {
         this.boardElement = document.getElementById('chess-board');
-        this.gameStatusElement = document.getElementById('game-status');
-        this.capturedWhiteElement = document.getElementById('captured-white');
-        this.capturedBlackElement = document.getElementById('captured-black');
+        this.winnerScreen = document.createElement('div');
+        this.winnerScreen.id = 'winner-screen';
+        this.winnerScreen.className = 'winner-screen';
+        this.winnerScreen.innerHTML = `
+            <div class="winner-content glassmorphism">
+                <h2 id="winner-message"></h2>
+                <button id="restart-button" class="btn btn-primary">Play Again</button>
+            </div>
+        `;
+        document.body.appendChild(this.winnerScreen);
+
+        this.winnerMessageElement = document.getElementById('winner-message');
+        this.restartButton = document.getElementById('restart-button');
+        this.restartButton.addEventListener('click', () => this.newGame());
         
         document.getElementById('new-game').addEventListener('click', () => this.newGame());
         document.getElementById('undo-move').addEventListener('click', () => this.undoMove());
+    }
+
+    // Load audio files
+    loadAudio() {
+        // Create audio context for generating sounds
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Generate move sound
+        this.moveAudio = this.createMoveSound();
+        
+        // Generate capture sound
+        this.captureAudio = this.createCaptureSound();
+        
+        // Generate win sound
+        this.winAudio = this.createWinSound();
+        
+        // Generate queen alert sound
+        this.queenAlertAudio = this.createQueenAlertSound();
+    }
+
+    // Create move sound
+    createMoveSound() {
+        return () => {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+            
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + 0.1);
+        };
+    }
+
+    // Create capture sound
+    createCaptureSound() {
+        return () => {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(600, this.audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+            
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + 0.2);
+        };
+    }
+
+    // Create win sound
+    createWinSound() {
+        return () => {
+            const frequencies = [523, 659, 784, 1047]; // C, E, G, C
+            frequencies.forEach((freq, index) => {
+                setTimeout(() => {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.3);
+                }, index * 150);
+            });
+        };
+    }
+
+    // Create queen alert sound
+    createQueenAlertSound() {
+        return () => {
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(1000, this.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1500, this.audioContext.currentTime + 0.1);
+                    
+                    gainNode.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.1);
+                }, i * 200);
+            }
+        };
     }
 
     // Render the chess board
@@ -344,6 +462,15 @@ class ChessGame {
         // Handle captured piece
         if (capturedPiece) {
             this.capturedPieces[capturedPiece.color].push(capturedPiece);
+            this.captureAudio();
+        } else {
+            this.moveAudio();
+        }
+
+        // Check for queen capture
+        if (capturedPiece && capturedPiece.type === 'queen') {
+            this.queenAlertAudio();
+            alert(`${piece.color.charAt(0).toUpperCase() + piece.color.slice(1)} player captured the opponent's Queen!`);
         }
 
         // Move piece
@@ -356,13 +483,18 @@ class ChessGame {
         setTimeout(() => targetSquare.classList.remove('piece-moving'), 300);
 
         this.renderBoard();
-        this.updateCapturedPieces();
+        // this.updateCapturedPieces(); // Removed as per new UI
     }
 
     // Switch current player
     switchPlayer() {
         this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
         this.updateGameInfo();
+        
+        // Check if the new current player's queen is in danger
+        setTimeout(() => {
+            this.checkQueenInDanger();
+        }, 500);
     }
 
     // Check if a move would put the king in check
@@ -419,130 +551,4 @@ class ChessGame {
 
     // Find king position
     findKing(color) {
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const piece = this.board[row][col];
-                if (piece && piece.type === 'king' && piece.color === color) {
-                    return { row, col };
-                }
-            }
-        }
-        return null;
-    }
-
-    // Check game status (checkmate, stalemate, etc.)
-    checkGameStatus() {
-        const inCheck = this.isInCheck(this.currentPlayer);
-        const hasValidMoves = this.hasValidMoves(this.currentPlayer);
-
-        if (!hasValidMoves) {
-            if (inCheck) {
-                this.gameStatus = 'checkmate';
-                this.gameStatusElement.textContent = `Checkmate! ${this.currentPlayer === 'white' ? 'Black' : 'White'} wins!`;
-            } else {
-                this.gameStatus = 'stalemate';
-                this.gameStatusElement.textContent = 'Stalemate! Game is a draw.';
-            }
-        } else if (inCheck) {
-            this.gameStatusElement.textContent = `${this.currentPlayer.charAt(0).toUpperCase() + this.currentPlayer.slice(1)} is in check!`;
-        } else {
-            this.gameStatusElement.textContent = 'Game in progress';
-        }
-    }
-
-    // Check if player has any valid moves
-    hasValidMoves(color) {
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const piece = this.board[row][col];
-                if (piece && piece.color === color) {
-                    const validMoves = this.getValidMoves(row, col);
-                    if (validMoves.length > 0) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    // Update game information display
-    updateGameInfo() {
-        const whitePlayers = document.querySelectorAll('.white-player');
-        const blackPlayers = document.querySelectorAll('.black-player');
-        
-        whitePlayers.forEach(player => {
-            player.classList.toggle('active', this.currentPlayer === 'white');
-            const indicator = player.querySelector('.turn-indicator');
-            indicator.textContent = this.currentPlayer === 'white' ? 'Your turn' : 'Waiting...';
-        });
-        
-        blackPlayers.forEach(player => {
-            player.classList.toggle('active', this.currentPlayer === 'black');
-            const indicator = player.querySelector('.turn-indicator');
-            indicator.textContent = this.currentPlayer === 'black' ? 'Your turn' : 'Waiting...';
-        });
-    }
-
-    // Update captured pieces display
-    updateCapturedPieces() {
-        this.capturedWhiteElement.innerHTML = this.capturedPieces.white
-            .map(piece => `<span class="captured-piece">${this.getPieceSymbol(piece)}</span>`)
-            .join('');
-        
-        this.capturedBlackElement.innerHTML = this.capturedPieces.black
-            .map(piece => `<span class="captured-piece">${this.getPieceSymbol(piece)}</span>`)
-            .join('');
-    }
-
-    // Start a new game
-    newGame() {
-        this.board = this.initializeBoard();
-        this.currentPlayer = 'white';
-        this.selectedSquare = null;
-        this.gameStatus = 'active';
-        this.moveHistory = [];
-        this.capturedPieces = { white: [], black: [] };
-        
-        this.renderBoard();
-        this.updateGameInfo();
-        this.updateCapturedPieces();
-        this.gameStatusElement.textContent = 'Game in progress';
-    }
-
-    // Undo last move
-    undoMove() {
-        if (this.moveHistory.length === 0) return;
-        
-        const lastMove = this.moveHistory.pop();
-        
-        // Restore piece positions
-        this.board[lastMove.from.row][lastMove.from.col] = lastMove.piece;
-        this.board[lastMove.to.row][lastMove.to.col] = lastMove.capturedPiece;
-        
-        // Restore captured pieces
-        if (lastMove.capturedPiece) {
-            const capturedArray = this.capturedPieces[lastMove.capturedPiece.color];
-            const index = capturedArray.findIndex(piece => 
-                piece.type === lastMove.capturedPiece.type && 
-                piece.color === lastMove.capturedPiece.color
-            );
-            if (index !== -1) {
-                capturedArray.splice(index, 1);
-            }
-        }
-        
-        // Switch player back
-        this.switchPlayer();
-        
-        this.renderBoard();
-        this.updateCapturedPieces();
-        this.clearSelection();
-        this.checkGameStatus();
-    }
-}
-
-// Initialize the game when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    new ChessGame();
-});
+        for (le
