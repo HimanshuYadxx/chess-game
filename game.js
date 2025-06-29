@@ -490,7 +490,6 @@ class ChessGame {
     switchPlayer() {
         this.currentPlayer = this.currentPlayer === 'white' ? 'black' : 'white';
         this.updateGameInfo();
-        
         // Check if the new current player's queen is in danger
         setTimeout(() => {
             this.checkQueenInDanger();
@@ -551,4 +550,209 @@ class ChessGame {
 
     // Find king position
     findKing(color) {
-        for (le
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const piece = this.board[row][col];
+                if (piece && piece.type === 'king' && piece.color === color) {
+                    return { row, col };
+                }
+            }
+        }
+        return null;
+    }
+
+    // Check for queen in danger and show save moves
+    checkQueenInDanger() {
+        const opponentColor = this.currentPlayer === 'white' ? 'black' : 'white';
+        const queenPosition = this.findQueen(opponentColor);
+        
+        if (queenPosition) {
+            const queenMoves = this.getValidMoves(queenPosition.row, queenPosition.col);
+            const isQueenInDanger = this.isQueenUnderAttack(queenPosition, opponentColor);
+            
+            if (isQueenInDanger && queenMoves.length > 0) {
+                this.showQueenAlert(opponentColor);
+                this.highlightQueenSaveMoves(queenPosition, queenMoves);
+                this.queenAlertAudio();
+            }
+        }
+    }
+
+    // Find queen position
+    findQueen(color) {
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const piece = this.board[row][col];
+                if (piece && piece.type === 'queen' && piece.color === color) {
+                    return { row, col };
+                }
+            }
+        }
+        return null;
+    }
+
+    // Check if queen is under attack
+    isQueenUnderAttack(queenPosition, queenColor) {
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const piece = this.board[row][col];
+                if (piece && piece.color !== queenColor) {
+                    const moves = this.getBasicMoves(row, col, piece);
+                    if (moves.some(move => move.row === queenPosition.row && move.col === queenPosition.col)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // Show queen alert
+    showQueenAlert(color) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'queen-alert';
+        alertDiv.textContent = `${color.charAt(0).toUpperCase() + color.slice(1)} Queen is in danger! Save your Queen!`;
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 3000);
+    }
+
+    // Highlight queen save moves
+    highlightQueenSaveMoves(queenPosition, queenMoves) {
+        const queenSquare = this.getSquareElement(queenPosition.row, queenPosition.col);
+        queenSquare.classList.add('queen-save-highlight');
+        
+        queenMoves.forEach(move => {
+            const moveSquare = this.getSquareElement(move.row, move.col);
+            moveSquare.classList.add('queen-save-highlight');
+        });
+        
+        setTimeout(() => {
+            queenSquare.classList.remove('queen-save-highlight');
+            queenMoves.forEach(move => {
+                const moveSquare = this.getSquareElement(move.row, move.col);
+                moveSquare.classList.remove('queen-save-highlight');
+            });
+        }, 3000);
+    }
+
+    // Check if player has any valid moves
+    hasValidMoves(color) {
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const piece = this.board[row][col];
+                if (piece && piece.color === color) {
+                    const validMoves = this.getValidMoves(row, col);
+                    if (validMoves.length > 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // Check game status for checkmate/stalemate
+    checkGameStatus() {
+        const currentPlayerHasMoves = this.hasValidMoves(this.currentPlayer);
+        const isInCheck = this.isInCheck(this.currentPlayer);
+        
+        if (!currentPlayerHasMoves) {
+            if (isInCheck) {
+                // Checkmate
+                const winner = this.currentPlayer === 'white' ? 'Black' : 'White';
+                this.gameStatus = 'checkmate';
+                this.showWinnerScreen(`Checkmate! ${winner} wins!`);
+                this.winAudio();
+            } else {
+                // Stalemate
+                this.gameStatus = 'stalemate';
+                this.showWinnerScreen('Stalemate! It\'s a draw!');
+            }
+        }
+    }
+
+    // Update game information display
+    updateGameInfo() {
+        const whitePlayers = document.querySelectorAll('.white-player');
+        const blackPlayers = document.querySelectorAll('.black-player');
+        
+        whitePlayers.forEach(player => {
+            player.classList.toggle('active', this.currentPlayer === 'white');
+            const indicator = player.querySelector('.turn-indicator');
+            indicator.textContent = this.currentPlayer === 'white' ? 'Your turn' : 'Waiting...';
+        });
+        
+        blackPlayers.forEach(player => {
+            player.classList.toggle('active', this.currentPlayer === 'black');
+            const indicator = player.querySelector('.turn-indicator');
+            indicator.textContent = this.currentPlayer === 'black' ? 'Your turn' : 'Waiting...';
+        });
+    }
+
+    // Show winner screen
+    showWinnerScreen(message) {
+        this.winnerMessageElement.textContent = message;
+        this.winnerScreen.style.display = 'flex';
+    }
+
+    // Hide winner screen
+    hideWinnerScreen() {
+        this.winnerScreen.style.display = 'none';
+    }
+
+    // Start a new game
+    newGame() {
+        this.board = this.initializeBoard();
+        this.currentPlayer = 'white';
+        this.selectedSquare = null;
+        this.gameStatus = 'active';
+        this.moveHistory = [];
+        this.capturedPieces = { white: [], black: [] };
+        
+        this.renderBoard();
+        this.updateGameInfo();
+        // this.updateCapturedPieces(); // Removed as per new UI
+        this.hideWinnerScreen();
+    }
+
+    // Undo last move
+    undoMove() {
+        if (this.moveHistory.length === 0) return;
+        
+        const lastMove = this.moveHistory.pop();
+        
+        // Restore piece positions
+        this.board[lastMove.from.row][lastMove.from.col] = lastMove.piece;
+        this.board[lastMove.to.row][lastMove.to.col] = lastMove.capturedPiece;
+        
+        // Restore captured pieces
+        if (lastMove.capturedPiece) {
+            const capturedArray = this.capturedPieces[lastMove.capturedPiece.color];
+            const index = capturedArray.findIndex(piece => 
+                piece.type === lastMove.capturedPiece.type && 
+                piece.color === lastMove.capturedPiece.color
+            );
+            if (index !== -1) {
+                capturedArray.splice(index, 1);
+            }
+        }
+        
+        // Switch player back
+        this.switchPlayer();
+        
+        this.renderBoard();
+        // this.updateCapturedPieces(); // Removed as per new UI
+        this.clearSelection();
+        this.checkGameStatus();
+    }
+}
+
+// Initialize the game when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.game = new ChessGame();
+});
