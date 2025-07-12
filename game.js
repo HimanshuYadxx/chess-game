@@ -72,6 +72,9 @@ class ChessGame {
         
         // Generate queen alert sound
         this.queenAlertAudio = this.createQueenAlertSound();
+
+        // Generate king alert sound
+        this.kingAlertAudio = this.createKingAlertSound();
     }
 
     // Create move sound
@@ -159,6 +162,26 @@ class ChessGame {
                     oscillator.stop(this.audioContext.currentTime + 0.1);
                 }, i * 200);
             }
+        };
+    }
+
+    // Create king alert sound
+    createKingAlertSound() {
+        return () => {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + 0.5);
+            
+            gainNode.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+            
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + 0.5);
         };
     }
 
@@ -515,12 +538,7 @@ class ChessGame {
         return inCheck;
     }
 
-    // Check if a king is in check
-    isInCheck(color) {
-        const kingPosition = this.findKing(color);
-        if (!kingPosition) return false;
-
-        // Check if any opponent piece can attack the king
+    // Check if any opponent piece can attack the king
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
                 const piece = this.board[row][col];
@@ -576,6 +594,36 @@ class ChessGame {
                 this.queenAlertAudio();
             }
         }
+    }
+
+    // Check for king in danger and show save moves
+    checkKingInDanger() {
+        const kingPosition = this.findKing(this.currentPlayer);
+        if (!kingPosition) return;
+
+        const isInCheck = this.isInCheck(this.currentPlayer);
+
+        if (isInCheck) {
+            this.showKingAlert(this.currentPlayer);
+            this.kingAlertAudio();
+            // Optionally highlight king save moves, similar to queen
+            // const kingMoves = this.getValidMoves(kingPosition.row, kingPosition.col);
+            // this.highlightKingSaveMoves(kingPosition, kingMoves);
+        }
+    }
+
+    // Show king alert
+    showKingAlert(color) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'king-alert';
+        alertDiv.textContent = `${color.charAt(0).toUpperCase() + color.slice(1)} King is in check!`;
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 3000);
     }
 
     // Find queen position
@@ -671,9 +719,12 @@ class ChessGame {
             } else {
                 // Stalemate
                 this.gameStatus = 'stalemate';
-                this.showWinnerScreen('Stalemate! It\'s a draw!');
+                this.showWinnerScreen('Stalemate! It\\'s a draw!');
             }
         }
+
+        // Check if the current player's King is in danger
+        this.checkKingInDanger();
     }
 
     // Update game information display
