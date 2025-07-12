@@ -415,17 +415,6 @@ body {
     }
 }
 
-@keyframes alertSlideIn {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
 @keyframes pulse {
     0%, 100% { 
         box-shadow: 0 0 20px rgba(255, 255, 0, 0.8);
@@ -470,4 +459,4 @@ body {
     10% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     90% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-    }
+}
