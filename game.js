@@ -36,7 +36,7 @@ class ChessGame {
 
     // Initialize UI elements and event listeners
     initializeUI() {
-        this.boardElement = document.getElementById('chess-board');
+        this.boardElement = document.querySelector('.chess-board');
         this.winnerScreen = document.createElement('div');
         this.winnerScreen.id = 'winner-screen';
         this.winnerScreen.className = 'winner-screen';
@@ -155,7 +155,7 @@ class ChessGame {
                     oscillator.frequency.setValueAtTime(1000, this.audioContext.currentTime);
                     oscillator.frequency.exponentialRampToValueAtTime(1500, this.audioContext.currentTime + 0.1);
                     
-                    gainNode.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+   gainNode.gain.setValueAtTime(0.4, this.audioContext.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
                     
                     oscillator.start(this.audioContext.currentTime);
@@ -185,28 +185,6 @@ class ChessGame {
         };
     }
 
-    // Render the chess board
-    renderBoard() {
-        this.boardElement.innerHTML = '';
-        
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const square = document.createElement('div');
-                square.className = `square ${(row + col) % 2 === 0 ? 'light' : 'dark'}`;
-                square.dataset.row = row;
-                square.dataset.col = col;
-                
-                const piece = this.board[row][col];
-                if (piece) {
-                    square.textContent = this.getPieceSymbol(piece);
-                }
-                
-                square.addEventListener('click', () => this.handleSquareClick(row, col));
-                this.boardElement.appendChild(square);
-            }
-        }
-    }
-
     // Get Unicode symbol for chess pieces
     getPieceSymbol(piece) {
         const symbols = {
@@ -222,12 +200,31 @@ class ChessGame {
         return symbols[piece.color][piece.type];
     }
 
+    // Render the chess board
+    renderBoard() {
+        this.boardElement.innerHTML = "";
+        
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const square = document.createElement("div");
+                square.className = `square ${(row + col) % 2 === 0 ? "light" : "dark"}`;
+                square.dataset.row = row;
+                square.dataset.col = col;
+                
+                const piece = this.board[row][col];
+                if (piece) {
+                    square.textContent = this.getPieceSymbol(piece);
+                }
+                
+                square.addEventListener("click", () => this.handleSquareClick(row, col));
+                this.boardElement.appendChild(square);
+            }
+        }
+    }
+
     // Handle square click events
     handleSquareClick(row, col) {
         if (this.gameStatus !== 'active') return;
-
-        const clickedSquare = { row, col };
-        const piece = this.board[row][col];
 
         if (this.selectedSquare) {
             if (this.selectedSquare.row === row && this.selectedSquare.col === col) {
@@ -538,7 +535,12 @@ class ChessGame {
         return inCheck;
     }
 
-    // Check if any opponent piece can attack the king
+    // Check if a king is in check
+    isInCheck(color) {
+        const kingPosition = this.findKing(color);
+        if (!kingPosition) return false;
+
+        // Check if any opponent piece can attack the king
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
                 const piece = this.board[row][col];
